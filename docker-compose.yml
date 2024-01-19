@@ -1,0 +1,21 @@
+version: '3.9'
+services:
+  app:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    volumes:
+      - ./share:/share
+      - ./data:/database
+    ports:
+      - "${APP_PORT}:8000"
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
+    environment:
+      - APP_PORT=${APP_PORT}
+      - http_proxy=
+      - https_proxy=
+      - no_proxy="*"
+      - HTTP_PROXY=
+      - HTTPS_PROXY=
+      - NO_PROXY="*"
