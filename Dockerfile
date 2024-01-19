@@ -1,8 +1,11 @@
 FROM php:8.2-cli
 
-RUN apt-get update && apt-get install --no-install-recommends -y \
+RUN apt-get update && apt-get install -y --no-install-recommends \
     cron \
     supervisor \
+    unzip \
+    p7zip \
+    git \
     && apt-get clean \
     && rm -rf /var/lib/apt/lists/*
 COPY --from=composer:latest /usr/bin/composer /usr/bin/composer
@@ -12,7 +15,7 @@ RUN mkdir /app
 COPY ./p2p-src /app
 COPY ./config/crontab /app/crontab
 WORKDIR /app
-RUN COMPOSER_ALLOW_SUPERUSER=1 composer install
+RUN composer install
 RUN crontab /app/crontab
 
 CMD [ "/usr/bin/supervisord" ]
