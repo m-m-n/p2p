@@ -12,7 +12,7 @@ RUN mkdir /app
 COPY ./p2p-src /app
 COPY ./config/crontab /app/crontab
 WORKDIR /app
-RUN composer install
+RUN COMPOSER_ALLOW_SUPERUSER=1 composer install
 RUN crontab /app/crontab
 
 CMD [ "/usr/bin/supervisord" ]
