@@ -14,6 +14,8 @@ class FileDownloadController extends Controller
      */
     public function download(string $hash)
     {
+        ini_set('max_execution_time', 0);
+
         $sha3_512 = substr($hash, 0, 128);
         $md5 = substr($hash, 128, 32);
         $data = ShareFiles::where("sha3_512", $sha3_512)->where("md5", $md5)->first();
