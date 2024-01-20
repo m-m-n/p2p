@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use App\Models\ShareFiles;
 use App\Models\Search;
+use App\Services\FilePostProcessorService;
 use GuzzleHttp\Client;
 use Symfony\Component\HttpFoundation\StreamedResponse;
 
@@ -21,8 +22,8 @@ class FileDownloadController extends Controller
         $data = ShareFiles::where("sha3_512", $sha3_512)->where("md5", $md5)->first();
         if ($data === null) {
             // 上位ノードからファイルをダウンロードする
-            $other_node = Search::where("hash", $hash)->inRandomOrder()->first();
-            return $this->otherNodeDownload($other_node, $hash);
+            $search_record = Search::where("hash", $hash)->inRandomOrder()->first();
+            return $this->otherNodeDownload($search_record);
         }
 
         $file_path = "/share/{$data->filename}";
@@ -35,16 +36,16 @@ class FileDownloadController extends Controller
         return response()->download($file_path);
     }
 
-    private function otherNodeDownload(Search $other_node, string $hash)
+    private function otherNodeDownload(Search $search_record)
     {
         $client = new Client();
-        $response = $client->get("http://{$other_node->host}:{$other_node->port}/share/{$hash}", [
+        $response = $client->get("http://{$search_record->host}:{$search_record->port}/share/{$search_record->hash}", [
             "connect_timeout" => 10,
             'stream' => true,
         ]);
 
-        $file_handle = fopen("/share/tmp/{$hash}", "w");
-        return new StreamedResponse(function () use ($response, $file_handle) {
+        $file_handle = fopen("/share/tmp/{$search_record->hash}", "w");
+        return new StreamedResponse(function () use ($response, $file_handle, $search_record) {
             $body = $response->getBody();
             while (!$body->eof()) {
                 $chunk = $body->read(1024);
@@ -52,6 +53,13 @@ class FileDownloadController extends Controller
                 echo $chunk;
             }
             fclose($file_handle);
+
+            $file_post_processor_service = new FilePostProcessorService();
+            $err_msg = $file_post_processor_service->update($search_record->hash, $search_record->filename);
+            if ($err_msg !== null) {
+                $this->error($err_msg);
+                return;
+            }
         }, 200, [
             'Content-Type' => $response->getHeaderLine('Content-Type'),
             'Content-Length' => $response->getHeaderLine('Content-Length'),

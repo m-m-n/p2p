@@ -4,6 +4,7 @@ namespace App\Console\Commands;
 
 use App\Models\DownloadQueue as DownloadQueueModel;
 use App\Models\Search as SearchModel;
+use App\Services\FilePostProcessorService;
 use Illuminate\Console\Command;
 use GuzzleHttp\Client;
 use GuzzleHttp\Pool;
@@ -45,28 +46,12 @@ class DownloadQueue extends Command
                     ]);
                     $request->then(function ($response) use ($item) {
                         // ダウンロードが成功した場合の処理
-                        $filepath = "/share/tmp/{$item->hash}";
-                        if (!Storage::disk("share")->exists("/tmp/{$item->hash}")) {
-                            $this->error("ファイルが存在しません: {$filepath}");
+                        $file_post_processor_service = new FilePostProcessorService();
+                        $err_msg = $file_post_processor_service->update($item->hash, $item->filename);
+                        if ($err_msg !== null) {
+                            $this->error($err_msg);
                             return;
                         }
-                        $this->info("ファイルをダウンロードしました: {$filepath}");
-                        $sha3_512 = hash_file('sha3-512', $filepath);
-                        $md5 = hash_file('md5', $filepath);
-                        $hash = "{$sha3_512}{$md5}";
-                        if ($item->hash !== $hash) {
-                            $this->info("ファイルのハッシュ値が一致しませんでした");
-                            unlink($filepath);
-                            return;
-                        }
-
-                        // ファイルを/shareに移動する
-                        if (!Storage::disk("share")->move("/tmp/{$item->hash}", "/{$item->filename}")) {
-                            $this->error("ファイルの移動に失敗しました: {$filepath}");
-                            return;
-                        }
-                        // ShareFilesをアップデートする
-                        Artisan::call('app:refresh-share');
                         // DownloadQueueを削除する
                         DownloadQueueModel::where("hash", $item->hash)->delete();
                     }, function ($exception) use ($item) {
