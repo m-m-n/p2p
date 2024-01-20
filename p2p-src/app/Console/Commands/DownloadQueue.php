@@ -40,6 +40,7 @@ class DownloadQueue extends Command
                 yield function () use ($item, $client) {
                     $host = SearchModel::where("hash", $item->hash)->inRandomOrder()->first();
                     $request = $client->getAsync("http://{$host->host}:{$host->port}/share/{$item->hash}", [
+                        "connect_timeout" => 10,
                         "sink" => "/share/tmp/{$item->hash}",
                     ]);
                     $request->then(function ($response) use ($item) {

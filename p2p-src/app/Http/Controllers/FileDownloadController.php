@@ -18,15 +18,16 @@ class FileDownloadController extends Controller
         $md5 = substr($hash, 128, 32);
         $data = ShareFiles::where("sha3_512", $sha3_512)->where("md5", $md5)->first();
         if ($data === null) {
-            abort(404);
+            // 上位ノードからファイルをダウンロードする
+            $other_node = Search::where("hash", $hash)->inRandomOrder()->first();
+            return $this->otherNodeDownload($other_node, $hash);
         }
 
         $file_path = "/share/{$data->filename}";
 
         if (!file_exists($file_path)) {
-            // 上位ノードからファイルをダウンロードする
-            $other_node = Search::where("hash", $hash)->inRandomOrder()->first();
-            return $this->otherNodeDownload($other_node, $hash);
+            // 404を返す
+            abort(404);
         }
 
         return response()->download($file_path);

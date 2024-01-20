@@ -17,8 +17,8 @@ class SearchController extends Controller
         // 検索結果が0件の場合は上位ノードに検索リクエストを送信する
         if (count($result) === 0) {
             $search_service = new SearchService();
-            $search_result = $search_service->searchRequest($keyword);
-            $search_service->updateSearchTable($search_result, (int) $request->input('ttl') - 1);
+            $search_result = $search_service->searchRequest($keyword, (int) $request->input('ttl') - 1);
+            $search_service->updateSearchTable($search_result);
             return response()->json(array_values($this->retrieveSearchInfo($keyword)));
         }
 
