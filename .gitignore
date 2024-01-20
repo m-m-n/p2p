@@ -7,6 +7,7 @@
 
 /share/*
 !/share/.gitkeep
+!/share/tmp
 /share/tmp/*
 !/share/tmp/.gitkeep
 
