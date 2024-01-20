@@ -44,6 +44,12 @@ class Search extends Command
             ];
         }
 
+        // 検索結果が0件の場合は終了する
+        if (count($records) === 0) {
+            $this->info("検索結果が0件です(keyword: {$this->argument('keyword')})");
+            return;
+        }
+
         // 各キーの文字列の最大長を求める
         $strlen_list = [
             "filename" => 0,

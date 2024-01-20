@@ -41,6 +41,7 @@ class SearchService
     {
         $client = new Client();
         $response = $client->request('GET', "http://{$node->host}:{$node->port}/search", [
+            "connect_timeout" => 10,
             'query' => [
                 'keyword' => $keyword,
                 "ttl" => $ttl,

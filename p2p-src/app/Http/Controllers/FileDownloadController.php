@@ -9,6 +9,9 @@ use Symfony\Component\HttpFoundation\StreamedResponse;
 
 class FileDownloadController extends Controller
 {
+    /**
+     * ダウンロード要求に対してファイルを返す
+     */
     public function download(string $hash)
     {
         $sha3_512 = substr($hash, 0, 128);
@@ -33,6 +36,7 @@ class FileDownloadController extends Controller
     {
         $client = new Client();
         $response = $client->get("http://{$other_node->host}:{$other_node->port}/share/{$hash}", [
+            "connect_timeout" => 10,
             'stream' => true,
         ]);
 

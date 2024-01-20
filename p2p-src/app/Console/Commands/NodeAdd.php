@@ -50,6 +50,7 @@ class NodeAdd extends Command
     {
         $client = new Client();
         $response = $client->get("http://{$host}:{$port}/status", [
+            "connect_timeout" => 10,
             "query" => [
                 "port" => env('APP_PORT'),
             ],
@@ -68,7 +69,9 @@ class NodeAdd extends Command
     private function addNodes(string $host, int $port): void
     {
         $client = new Client();
-        $response = $client->get("http://{$host}:{$port}/node-list");
+        $response = $client->get("http://{$host}:{$port}/node-list", [
+            "connect_timeout" => 10,
+        ]);
 
         $json = json_decode($response->getBody(), true);
         $this->info($response->getBody());
