@@ -10,4 +10,10 @@ class DownloadQueue extends Model
     use HasFactory;
 
     protected $table = "download_queue";
+
+    protected $fillable = [
+        "hash",
+        "filename",
+        "bytes",
+    ];
 }
