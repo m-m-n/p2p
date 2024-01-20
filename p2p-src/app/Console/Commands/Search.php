@@ -4,8 +4,7 @@ namespace App\Console\Commands;
 
 use Illuminate\Console\Command;
 use App\Models\Search as SearchModel;
-use App\Models\NodeList;
-use GuzzleHttp\Client;
+use App\Services\SearchService;
 
 class Search extends Command
 {
@@ -29,11 +28,10 @@ class Search extends Command
     public function handle()
     {
         // 検索リクエストを送信する
-        $search_result = $this->searchRequest($this->argument('keyword'));
+        $search_service = new SearchService();
+        $search_result = $search_service->searchRequest($this->argument('keyword'));
         // 結果をSearchテーブルに保存する
-        foreach ($search_result as $record) {
-            SearchModel::updateOrCreate($record);
-        }
+        $search_service->updateSearchTable($search_result);
 
         // Searchテーブルから検索結果を取得する
         // hash値をキーとしてまとめる
@@ -89,36 +87,5 @@ class Search extends Command
         $this->info("+-" . implode("-+-", array_map(function ($value) {
             return str_repeat("-", $value);
         }, $strlen_list)) . "-+");
-    }
-
-    private function searchRequest(string $keyword): array
-    {
-        // ノードリストを10件ランダムで取得する
-        $nodes = NodeList::getRandomNodes(10);
-        // 検索リクエストを送信する
-        $search_result = [];
-        foreach ($nodes as $node) {
-            $search_result = array_merge($search_result, $this->searchRequestToNode($node, $keyword));
-        }
-        return $search_result;
-    }
-
-    private function searchRequestToNode(NodeList $node, string $keyword): array
-    {
-        $client = new Client();
-        $response = $client->request('GET', "http://{$node->host}:{$node->port}/search", [
-            'query' => [
-                'keyword' => $keyword,
-                "ttl" => 1,
-            ],
-        ]);
-
-        $data = json_decode($response->getBody(), true);
-        foreach (array_keys($data) as $index) {
-            $data[$index]['host'] = $node->host;
-            $data[$index]['port'] = $node->port;
-        }
-
-        return $data;
     }
 }
